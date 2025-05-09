@@ -26,6 +26,7 @@ try {
 
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <title>News Feed</title>
@@ -55,7 +56,7 @@ try {
             min-height: 100vh;
         }
 
-        body > * {
+        body>* {
             grid-column: 2;
         }
 
@@ -76,7 +77,8 @@ try {
             color: var(--text-dark);
         }
 
-        .header-btn, .create-post-btn {
+        .header-btn,
+        .create-post-btn {
             padding: 8px 16px;
             background-color: var(--primary);
             color: white;
@@ -96,7 +98,7 @@ try {
             border-radius: 8px;
             padding: 15px;
             margin-bottom: 40px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
         }
 
         .dark-mode .post-card {
@@ -122,7 +124,8 @@ try {
             padding: 8px;
         }
 
-        button, a.button-link {
+        button,
+        a.button-link {
             cursor: pointer;
         }
 
@@ -135,7 +138,8 @@ try {
             color: var(--secondary);
         }
 
-        .like-btn, .dislike-btn {
+        .like-btn,
+        .dislike-btn {
             background: none;
             border: none;
             cursor: pointer;
@@ -150,6 +154,7 @@ try {
         }
     </style>
 </head>
+
 <body>
 
     <div class="full-width">
@@ -188,16 +193,16 @@ try {
 
                     <div class="" style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px;">
                         <form method="POST" action="../actions/like_post_action.php" style="display:inline;">
-                        <input type="hidden" name="post_id" value="<?= $postId ?>">
-                        <input type="hidden" name="action" value="like">
-                        <button type="submit" class="like-btn">👍 Like (<?= $likeCount ?>)</button>
-                    </form>
+                            <input type="hidden" name="post_id" value="<?= $postId ?>">
+                            <input type="hidden" name="action" value="like">
+                            <button type="submit" class="like-btn">👍 Like (<?= $likeCount ?>)</button>
+                        </form>
 
-                    <form method="POST" action="../actions/like_post_action.php" style="display:inline;">
-                        <input type="hidden" name="post_id" value="<?= $postId ?>">
-                        <input type="hidden" name="action" value="dislike">
-                        <button type="submit" class="dislike-btn">👎 Dislike (<?= $dislikeCount ?>)</button>
-                    </form>
+                        <form method="POST" action="../actions/like_post_action.php" style="display:inline;">
+                            <input type="hidden" name="post_id" value="<?= $postId ?>">
+                            <input type="hidden" name="action" value="dislike">
+                            <button type="submit" class="dislike-btn">👎 Dislike (<?= $dislikeCount ?>)</button>
+                        </form>
                     </div>
 
                     <!-- Comments -->
@@ -226,16 +231,21 @@ try {
                         <p class="text-muted">No comments yet.</p>
                     <?php endif; ?>
 
-                    <form action="../actions/comment_create_action.php" method="POST" style="margin-top:10px;">
+                    <form action="../actions/delete_post_action.php" method="POST" onsubmit="return confirm('Are you sure you want to delete this post?');" style="display:inline;">
                         <input type="hidden" name="post_id" value="<?= $postId ?>">
-                        <textarea name="comment_content" rows="2" required placeholder="Add a comment..."></textarea><br>
-                        <button type="submit" class="header-btn" style="margin-top:5px; background-color: var(--success);">Comment</button>
+                        <button type="submit" class="button-link" style="color:red; background:none; border:none; padding:0; cursor:pointer;">Delete</button>
                     </form>
+
+
 
                     <?php if ($_SESSION['user_id'] == $post['user_id']): ?>
                         <div style="margin-top:10px;">
                             <a href="edit_post.php?id=<?= $postId ?>" class="button-link">Edit</a> |
-                            <a href="../actions/delete_post_action.php?id=<?= $postId ?>" class="button-link" style="color:red;" onclick="return confirm('Are you sure you want to delete this post?');">Delete</a>
+                            <form action="../actions/delete_post_action.php" method="POST" onsubmit="return confirm('Are you sure you want to delete this post?');" style="display:inline;">
+                                <input type="hidden" name="post_id" value="<?= $postId ?>">
+                                <button type="submit" class="button-link" style="color:red; background:none; border:none; padding:0; cursor:pointer;">Delete</button>
+                            </form>
+
                         </div>
                     <?php endif; ?>
                 </div>
@@ -275,4 +285,5 @@ try {
         });
     </script>
 </body>
+
 </html>

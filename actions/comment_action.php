@@ -1,18 +1,29 @@
 <?php
-session_start();
 require_once '../config/db.php';
+session_start();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $post_id = intval($_POST['post_id']);
-    $user_id = $_SESSION['user_id'];
-    $comment_content = htmlspecialchars(trim($_POST['comment_content']));
+    $postId = $_POST['post_id'] ?? null;
+    $content = $_POST['comment_content'] ?? '';
+    $userId = $_SESSION['user_id'] ?? null;
 
-    if (!empty($comment_content)) {
-        $stmt = $pdo->prepare("INSERT INTO comments (post_id, user_id, content) VALUES (?, ?, ?)");
-        $stmt->execute([$post_id, $user_id, $comment_content]);
+    if ($postId && $userId && !empty(trim($content))) {
+        $stmt = $pdo->prepare("INSERT INTO comments (user_id, post_id, content) VALUES (?, ?, ?)");
+        $stmt->execute([$userId, $postId, $content]);
+
+        $commentId = $pdo->lastInsertId();
+
+        $fetch = $pdo->prepare("
+            SELECT comments.content, comments.created_at, users.username 
+            FROM comments JOIN users ON comments.user_id = users.id 
+            WHERE comments.id = ?
+        ");
+        $fetch->execute([$commentId]);
+        $comment = $fetch->fetch(PDO::FETCH_ASSOC);
+
+        echo json_encode(['status' => 'success', 'comment' => $comment]);
+        exit();
     }
 }
 
-header("Location: ../pages/home.php");
-exit;
-?>
+echo json_encode(['status' => 'error']);
