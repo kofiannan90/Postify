@@ -1,19 +1,22 @@
 <?php
+
+declare(strict_types=1);
 session_start();
+
 require_once '../config/db.php';
 
-// Redirect if user is not logged in
-if (!isset($_SESSION['user_id'])) {
+// 🛡️ Enforce user authentication
+if (empty($_SESSION['user_id'])) {
     header('Location: login.php');
     exit();
 }
 
 $userId = $_SESSION['user_id'];
 
-// Fetch current user details
+// 🔍 Fetch user details
 $stmt = $pdo->prepare("SELECT * FROM users WHERE id = ?");
 $stmt->execute([$userId]);
-$user = $stmt->fetch();
+$user = $stmt->fetch(PDO::FETCH_ASSOC);
 
 if (!$user) {
     header('Location: home.php');
@@ -23,14 +26,14 @@ if (!$user) {
 $successMessage = '';
 $errorMessages = [];
 
-// Handle form submission
+// 📝 Handle form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $username = trim($_POST['username']);
-    $email = trim($_POST['email']);
-    $password = $_POST['password']; // Raw input
-    $confirmPassword = $_POST['confirm_password'];
+    $username = trim($_POST['username'] ?? '');
+    $email = trim($_POST['email'] ?? '');
+    $password = $_POST['password'] ?? '';
+    $confirmPassword = $_POST['confirm_password'] ?? '';
 
-    // Basic input validation
+    // 🔎 Validate inputs
     if (empty($username)) {
         $errorMessages[] = "Username is required.";
     }
@@ -41,80 +44,147 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if (!empty($password)) {
         if (strlen($password) < 6) {
-            $errorMessages[] = "Password must be at least 6 characters long.";
+            $errorMessages[] = "Password must be at least 6 characters.";
         } elseif ($password !== $confirmPassword) {
             $errorMessages[] = "Passwords do not match.";
         }
     }
 
-    // If validation passes
+    // ✅ If no errors, proceed to update
     if (empty($errorMessages)) {
-        // If password is provided, hash it and update all fields
         if (!empty($password)) {
             $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
             $stmt = $pdo->prepare("UPDATE users SET username = ?, email = ?, password = ? WHERE id = ?");
             $stmt->execute([$username, $email, $hashedPassword, $userId]);
         } else {
-            // Only update username and email
             $stmt = $pdo->prepare("UPDATE users SET username = ?, email = ? WHERE id = ?");
             $stmt->execute([$username, $email, $userId]);
         }
 
         $successMessage = "Profile updated successfully.";
-        // Refresh user data
+
+        // Refresh session data
         $stmt = $pdo->prepare("SELECT * FROM users WHERE id = ?");
         $stmt->execute([$userId]);
-        $user = $stmt->fetch();
+        $user = $stmt->fetch(PDO::FETCH_ASSOC);
     }
 }
 ?>
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <title>Edit Profile</title>
     <style>
-        body { font-family: Arial; background-color: #f7f7f7; padding: 20px; }
-        .container { max-width: 500px; margin: auto; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        h2 { text-align: center; }
-        input, button { width: 100%; padding: 10px; margin-top: 10px; }
-        .error { color: red; }
-        .success { color: green; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f0f2f5;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            background: #ffffff;
+            max-width: 500px;
+            margin: auto;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+        }
+
+        h2 {
+            text-align: center;
+            color: #333;
+        }
+
+        label {
+            font-weight: bold;
+            display: block;
+            margin: 15px 0 5px;
+        }
+
+        input[type="text"],
+        input[type="email"],
+        input[type="password"],
+        button {
+            width: 100%;
+            padding: 10px;
+            font-size: 14px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+
+        button {
+            background: #007bff;
+            color: white;
+            font-weight: bold;
+            border: none;
+            margin-top: 20px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #0056b3;
+        }
+
+        .success,
+        .error {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 5px;
+        }
+
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+
+        ul {
+            padding-left: 20px;
+        }
     </style>
 </head>
+
 <body>
-<div class="container">
-    <h2>Edit Your Profile</h2>
+    <div class="container">
+        <h2>Update Your Profile</h2>
 
-    <?php if (!empty($errorMessages)): ?>
-        <div class="error">
-            <ul>
-                <?php foreach ($errorMessages as $error): ?>
-                    <li><?= htmlspecialchars($error); ?></li>
-                <?php endforeach; ?>
-            </ul>
-        </div>
-    <?php endif; ?>
+        <?php if (!empty($errorMessages)): ?>
+            <div class="error">
+                <ul>
+                    <?php foreach ($errorMessages as $error): ?>
+                        <li><?= htmlspecialchars($error) ?></li>
+                    <?php endforeach; ?>
+                </ul>
+            </div>
+        <?php endif; ?>
 
-    <?php if ($successMessage): ?>
-        <div class="success"><?= htmlspecialchars($successMessage); ?></div>
-    <?php endif; ?>
+        <?php if ($successMessage): ?>
+            <div class="success"><?= htmlspecialchars($successMessage) ?></div>
+        <?php endif; ?>
 
-    <form method="POST">
-        <label>Username</label>
-        <input type="text" name="username" value="<?= htmlspecialchars($user['username']); ?>" required>
+        <form method="POST" novalidate>
+            <label for="username">Username</label>
+            <input type="text" id="username" name="username" value="<?= htmlspecialchars($user['username']) ?>" required>
 
-        <label>Email</label>
-        <input type="email" name="email" value="<?= htmlspecialchars($user['email']); ?>" required>
+            <label for="email">Email</label>
+            <input type="email" id="email" name="email" value="<?= htmlspecialchars($user['email']) ?>" required>
 
-        <label>New Password (leave blank to keep current)</label>
-        <input type="password" name="password">
+            <label for="password">New Password (optional)</label>
+            <input type="password" id="password" name="password">
 
-        <label>Confirm Password</label>
-        <input type="password" name="confirm_password">
+            <label for="confirm_password">Confirm Password</label>
+            <input type="password" id="confirm_password" name="confirm_password">
 
-        <button type="submit">Update Profile</button>
-    </form>
-</div>
+            <button type="submit">Save Changes</button>
+        </form>
+    </div>
 </body>
+
 </html>
