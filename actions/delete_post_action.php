@@ -1,9 +1,15 @@
 <?php
 session_start();
 require_once '../config/db.php';
+if (!isset($_SESSION['user_id'])) {
+    die("Unauthorized: Session missing.");
+}
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_SESSION['user_id'])) {
-    $postId = (int)$_POST['post_id'];
+if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_SESSION['user_id'], $_GET['id'])) {
+    $postId = (int)$_GET['id'];
+
+
+
 
     // Fetch post to verify ownership and get image name
     $stmt = $pdo->prepare("SELECT * FROM posts WHERE id = ? AND user_id = ?");
