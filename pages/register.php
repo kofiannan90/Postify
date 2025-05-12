@@ -3,7 +3,7 @@ require_once '../config/db.php';
 session_start();
 
 $errors = [];
-$uploadDir = '../uploads/profile_pictures/';
+$uploadDir = '../uploads/';
 $allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
 $maxFileSize = 2 * 1024 * 1024; // 2MB
 
